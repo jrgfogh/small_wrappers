@@ -3,11 +3,13 @@
 #include <mutex>
 #include <utility>
 #include <memory>
+#include <concepts>
+#include <functional>
 
 namespace sw
 {
 	template <typename ValueType, typename InitType = std::move_only_function<typename ValueType()>>
-	// TODO(jrgfogh): Constraint InitType.
+		requires std::invocable<InitType>
 	class lazy_init final
 	{
 		mutable std::unique_ptr<ValueType> data_;
@@ -24,8 +26,13 @@ namespace sw
 		using value_type = ValueType;
 		using init_type = InitType;
 
-		explicit lazy_init(InitType init) :
+		explicit lazy_init(InitType &&init) :
 			init_{std::move(init)}
+		{
+		}
+
+		explicit lazy_init(InitType const &init) :
+			init_{init}
 		{
 		}
 
@@ -53,10 +60,14 @@ namespace sw
 			return data_.get();
 		}
 
-		template <typename = std::enable_if_t<std::equality_comparable<ValueType>>>
 		bool operator==(lazy_init const& that) const
 		{
 			return operator*() == *that;
+		}
+
+		auto operator<=>(lazy_init const& that) const -> std::strong_ordering
+		{
+			return operator*() <=> *that;
 		}
 	};
 }

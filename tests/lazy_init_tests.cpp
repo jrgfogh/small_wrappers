@@ -89,21 +89,22 @@ TEST(LazyInit, StarOperator)
 	}
 }
 
-struct equality_comparable final
+struct comparable final
 {
 	int value;
-	bool operator==(equality_comparable const&) const = default;
+	bool operator==(comparable const&) const = default;
+	std::strong_ordering operator<=>(comparable const&) const = default;
 };
 
 TEST(LazyInit, ArrowOperator)
 {
 	for (auto i : std::ranges::iota_view(5, 10))
 	{
-		sw::lazy_init<equality_comparable> li{
+		sw::lazy_init<comparable> li{
 			[&] {
-				return equality_comparable{i};
+				return comparable{i};
 			} };
-		sw::lazy_init<equality_comparable> const& const_ref = li;
+		sw::lazy_init<comparable> const& const_ref = li;
 		EXPECT_EQ(li->value, i);
 		EXPECT_EQ(const_ref->value, i);
 	}
@@ -111,44 +112,80 @@ TEST(LazyInit, ArrowOperator)
 
 TEST(LazyInit, CompareEquality)
 {
-	sw::lazy_init<equality_comparable> li0{
+	sw::lazy_init<comparable> li0{
 		[] {
-			return equality_comparable{0};
+			return comparable{0};
 		} };
 	
-	sw::lazy_init<equality_comparable> li1{
+	sw::lazy_init<comparable> li1{
 		[] {
-			return equality_comparable{1};
+			return comparable{1};
 		} };
-	sw::lazy_init<equality_comparable> const& const_ref = li0;
+	sw::lazy_init<comparable> const& const_ref = li0;
 	EXPECT_TRUE(li0 == const_ref);
 	EXPECT_TRUE(li0 != li1);
 	EXPECT_TRUE(const_ref != li1);
 	EXPECT_FALSE(li0 == li1);
 }
 
-struct not_equality_comparable final
+TEST(LazyInit, CompareSpaceship)
+{
+	sw::lazy_init<comparable> li0{
+		[] {
+			return comparable{0};
+		} };
+	
+	sw::lazy_init<comparable> li1{
+		[] {
+			return comparable{1};
+		} };
+	sw::lazy_init<comparable> const& const_ref = li0;
+	EXPECT_EQ(li0 <=> const_ref, std::strong_ordering::equal);
+	EXPECT_LT(li0, li1);
+	EXPECT_LT(const_ref, li1);
+	EXPECT_NE(li0 <=> li1, std::strong_ordering::equal);
+}
+
+struct not_comparable final
 {
 	int value;
-	bool operator==(equality_comparable const&) const = delete;
+	bool operator==(comparable const&) const = delete;
 };
 
 // This test ensures that we don't accidentally require the value type to be equality comparable,
 // unless we actually try to compare two values.
 TEST(LazyInit, UncomparableClassCanBeConstructed)
 {
-	sw::lazy_init<not_equality_comparable> li{
+	sw::lazy_init<not_comparable> li{
 		[] {
-			return not_equality_comparable{0};
+			return not_comparable{0};
 		} };
 	EXPECT_EQ((*li).value, 0);
 }
 
+struct copy_only_functor
+{
+	explicit copy_only_functor() = default;
+	copy_only_functor(copy_only_functor &&) = delete;
+	copy_only_functor(copy_only_functor const&) = default;
+	int operator()() { return 5; }
+};
 
+auto x = std::is_move_constructible_v<copy_only_functor>;
+
+TEST(LazyInit, CopyOnlyFunctorIsValidInitType)
+{
+	copy_only_functor functor;
+	sw::lazy_init<int, copy_only_functor> li{functor};
+	EXPECT_EQ(*li, 5);
+}
+
+//TEST(LazyInit, NullCheckInitFunction)
+//{
+//	EXPECT_THROW((sw::lazy_init<int>{nullptr}), std::exception);
+//	std::function<int()> init = nullptr;
+//	EXPECT_THROW((sw::lazy_init<int, std::function<int()>>{init}), std::exception);
+//}
 
 // TODO:
-// Implement operators
-//  Spaceship (conditionally)
-// Ensure thread safety.
 // Null-check function pointers.
-// Copy-only function types
