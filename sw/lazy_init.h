@@ -40,5 +40,23 @@ namespace sw
 			ensure_initialized();
 			return *data_;
 		}
+
+		auto operator->() -> ValueType*
+		{
+			ensure_initialized();
+			return data_.get();
+		}
+
+		auto operator->() const -> ValueType const*
+		{
+			ensure_initialized();
+			return data_.get();
+		}
+
+		template <typename = std::enable_if_t<std::equality_comparable<ValueType>>>
+		bool operator==(lazy_init const& that) const
+		{
+			return operator*() == *that;
+		}
 	};
 }

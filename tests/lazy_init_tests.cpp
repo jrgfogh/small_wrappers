@@ -13,14 +13,9 @@ concept lazy_init_specialization =
 	std::is_constructible_v<T, typename T::init_type> &&
 	std::is_same_v<decltype(*std::declval<T>()), typename T::value_type&> &&
 	std::is_same_v<decltype(*std::declval<T const>()), typename T::value_type const&>
-	// I'm not sure if this is a bug or a feature, but at least it's documented here:
-	//!std::is_move_assignable_v<T> &&
-	//!std::is_move_constructible_v<T> &&
-	//!std::is_copy_assignable_v<T> &&
-	//!std::is_copy_constructible_v<T>
 ;
 
-struct not_default_constructible alignas(16)
+struct not_default_constructible
 {
 	explicit not_default_constructible() = delete;
 	explicit not_default_constructible(int) {}
@@ -94,10 +89,65 @@ TEST(LazyInit, StarOperator)
 	}
 }
 
+struct equality_comparable final
+{
+	int value;
+	bool operator==(equality_comparable const&) const = default;
+};
+
+TEST(LazyInit, ArrowOperator)
+{
+	for (auto i : std::ranges::iota_view(5, 10))
+	{
+		sw::lazy_init<equality_comparable> li{
+			[&] {
+				return equality_comparable{i};
+			} };
+		sw::lazy_init<equality_comparable> const& const_ref = li;
+		EXPECT_EQ(li->value, i);
+		EXPECT_EQ(const_ref->value, i);
+	}
+}
+
+TEST(LazyInit, CompareEquality)
+{
+	sw::lazy_init<equality_comparable> li0{
+		[] {
+			return equality_comparable{0};
+		} };
+	
+	sw::lazy_init<equality_comparable> li1{
+		[] {
+			return equality_comparable{1};
+		} };
+	sw::lazy_init<equality_comparable> const& const_ref = li0;
+	EXPECT_TRUE(li0 == const_ref);
+	EXPECT_TRUE(li0 != li1);
+	EXPECT_TRUE(const_ref != li1);
+	EXPECT_FALSE(li0 == li1);
+}
+
+struct not_equality_comparable final
+{
+	int value;
+	bool operator==(equality_comparable const&) const = delete;
+};
+
+// This test ensures that we don't accidentally require the value type to be equality comparable,
+// unless we actually try to compare two values.
+TEST(LazyInit, UncomparableClassCanBeConstructed)
+{
+	sw::lazy_init<not_equality_comparable> li{
+		[] {
+			return not_equality_comparable{0};
+		} };
+	EXPECT_EQ((*li).value, 0);
+}
+
+
+
 // TODO:
 // Implement operators
-//  Arrow
-//  Equality (conditionally)
 //  Spaceship (conditionally)
 // Ensure thread safety.
 // Null-check function pointers.
