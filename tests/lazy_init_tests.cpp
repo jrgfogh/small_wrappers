@@ -21,6 +21,12 @@ struct not_default_constructible
 	explicit not_default_constructible(int) {}
 };
 
+
+struct not_assignable
+{
+	auto const &operator=(not_assignable const&) = delete;
+};
+
 static_assert(lazy_init_specialization<sw::lazy_init<double, int(*)()>>);
 static_assert(lazy_init_specialization<sw::lazy_init<not_default_constructible, not_default_constructible(*)()>>);
 static_assert(lazy_init_specialization<sw::lazy_init<std::string, std::string(*)()>>);
@@ -73,6 +79,16 @@ TEST(LazyInit, DoesNotRequireDefaultConstructibleData)
 		[] {
 			return not_default_constructible{5};
 		}};
+	*li;
+}
+
+TEST(LazyInit, DoesNotRequireAssignableData)
+{
+	sw::lazy_init<not_assignable> li{
+		[] {
+			return not_assignable{};
+		}};
+	*li;
 }
 
 TEST(LazyInit, StarOperator)

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <mutex>
 #include <utility>
 #include <memory>
 #include <concepts>
 #include <functional>
+#include <optional>
 
 namespace sw
 {
@@ -12,15 +12,13 @@ namespace sw
 		requires std::invocable<InitType>
 	class lazy_init final
 	{
-		mutable std::unique_ptr<ValueType> data_;
+		mutable std::optional<ValueType> data_;
 		mutable InitType init_;
 
 		void ensure_initialized() const
 		{
 			if (!data_)
-			{
-				data_ = std::make_unique<ValueType>(init_());
-			}
+				data_.emplace(init_());
 		}
 	public:
 		using value_type = ValueType;
@@ -48,16 +46,16 @@ namespace sw
 			return *data_;
 		}
 
-		auto operator->() -> ValueType*
+		auto operator->()
 		{
 			ensure_initialized();
-			return data_.get();
+			return data_;
 		}
 
-		auto operator->() const -> ValueType const*
+		auto operator->() const
 		{
 			ensure_initialized();
-			return data_.get();
+			return data_;
 		}
 
 		bool operator==(lazy_init const& that) const
