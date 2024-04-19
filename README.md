@@ -1,6 +1,6 @@
 # Small C++ Wrapper Classes
 
-The classes in this library make it easier to enforce envariants in larger classes.
+The classes in this library make it easier to enforce invariants in larger classes.
 None of them serve a business need directly, but they all make it easier to write classes that do.
 
 ## `propagate_const<PointerType>`
@@ -15,4 +15,4 @@ Ensures that a pointer can never be null.
 
 ## `lazy_init<T>`
 
-Ensures that the wrapped data is initialized exactly once, in a thread- and exception safe manner.
+Ensures that the wrapped data is initialized exactly once, in an exception safe manner.
