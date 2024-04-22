@@ -205,3 +205,4 @@ TEST(LazyInit, CopyOnlyFunctorIsValidInitType)
 
 // TODO:
 // Null-check function pointers.
+// Test with std::move_only_function<ValueType()>.

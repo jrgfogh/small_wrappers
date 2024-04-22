@@ -8,7 +8,7 @@
 
 namespace sw
 {
-	template <typename ValueType, typename InitType = std::move_only_function<typename ValueType()>>
+	template <typename ValueType, typename InitType = std::function<ValueType()>>
 		requires std::invocable<InitType>
 	class lazy_init final
 	{
