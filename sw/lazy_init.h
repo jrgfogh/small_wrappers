@@ -1,71 +1,55 @@
 #pragma once
 
-#include <utility>
-#include <memory>
 #include <concepts>
 #include <functional>
+#include <memory>
 #include <optional>
+#include <utility>
 
-namespace sw
-{
-	template <typename ValueType, typename InitType = std::function<ValueType()>>
-		requires std::invocable<InitType>
-	class lazy_init final
-	{
-		mutable std::optional<ValueType> data_;
-		mutable InitType init_;
+namespace sw {
+template <typename ValueType, typename InitType = std::function<ValueType()>>
+  requires std::invocable<InitType>
+class lazy_init final {
+  mutable std::optional<ValueType> data_;
+  mutable InitType init_;
 
-		void ensure_initialized() const
-		{
-			if (!data_)
-				data_.emplace(init_());
-		}
-	public:
-		using value_type = ValueType;
-		using init_type = InitType;
+  void ensure_initialized() const {
+    if (!data_)
+      data_.emplace(init_());
+  }
 
-		explicit lazy_init(InitType &&init) :
-			init_{std::move(init)}
-		{
-		}
+public:
+  using value_type = ValueType;
+  using init_type = InitType;
 
-		explicit lazy_init(InitType const &init) :
-			init_{init}
-		{
-		}
+  explicit lazy_init(InitType &&init) : init_{std::move(init)} {}
 
-		auto operator*() -> ValueType&
-		{
-			ensure_initialized();
-			return *data_;
-		}
+  explicit lazy_init(InitType const &init) : init_{init} {}
 
-		auto operator*() const -> ValueType const &
-		{
-			ensure_initialized();
-			return *data_;
-		}
+  auto operator*() -> ValueType & {
+    ensure_initialized();
+    return *data_;
+  }
 
-		auto operator->()
-		{
-			ensure_initialized();
-			return data_;
-		}
+  auto operator*() const -> ValueType const & {
+    ensure_initialized();
+    return *data_;
+  }
 
-		auto operator->() const
-		{
-			ensure_initialized();
-			return data_;
-		}
+  auto operator->() {
+    ensure_initialized();
+    return data_;
+  }
 
-		bool operator==(lazy_init const& that) const
-		{
-			return operator*() == *that;
-		}
+  auto operator->() const {
+    ensure_initialized();
+    return data_;
+  }
 
-		auto operator<=>(lazy_init const& that) const -> std::strong_ordering
-		{
-			return operator*() <=> *that;
-		}
-	};
-}
+  bool operator==(lazy_init const &that) const { return operator*() == *that; }
+
+  auto operator<=>(lazy_init const &that) const -> std::strong_ordering {
+    return operator*() <=> *that;
+  }
+};
+} // namespace sw

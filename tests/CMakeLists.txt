@@ -1,4 +1,4 @@
-﻿add_executable(
+add_executable(
   small_wrappers_tests
   "propagate_const_tests.cpp"
   "lazy_init_tests.cpp")
