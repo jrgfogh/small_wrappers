@@ -3,6 +3,9 @@
 The classes in this library make it easier to enforce invariants in larger classes.
 None of them serve a business need directly, but they all make it easier to write classes that do.
 
+The classes will be covered in my upcoming talk at C++ on Sea 2024, [The Surprising Power of Small Wrapper Classes
+](https://cpponsea.uk/2024/sessions/the-surprising-power-of-small-wrapper-classes.html).
+
 ## `propagate_const<PointerType>`
 
 Ensures that a const pointer also points to a const object.
