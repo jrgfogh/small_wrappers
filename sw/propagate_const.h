@@ -1,5 +1,8 @@
 #pragma once
 
+// This file uses function signatures copied from:
+// https://en.cppreference.com/w/cpp/experimental/propagate_const
+
 #include <memory>
 #include <type_traits>
 #include <utility>
@@ -27,8 +30,10 @@ public:
 
   constexpr element_type *operator->() { return std::to_address(t_); }
 
-  constexpr element_type const *operator->() const {
-    return std::to_address(t_);
-  }
+  constexpr element_type const *operator->() const { return std::to_address(t_); }
+
+  constexpr element_type &operator*() { return *std::to_address(t_); }
+
+  constexpr element_type const &operator*() const { return *std::to_address(t_); }
 };
 } // namespace sw

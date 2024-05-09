@@ -66,3 +66,61 @@ TEST(PropagateConst, ArrowPropagatesConstSharedPointer) {
   pc->call();
   EXPECT_TRUE(ct.const_call);
 }
+
+TEST(PropagateConst, StarPropagatesNonConstRawPointer) {
+  call_tester ct;
+  sw::propagate_const<call_tester *> pc{&ct};
+  (*pc).call();
+  EXPECT_TRUE(ct.non_const_call);
+}
+
+TEST(PropagateConst, StarPropagatesConstRawPointer) {
+  call_tester ct;
+  sw::propagate_const<call_tester *> const pc{&ct};
+  (*pc).call();
+  EXPECT_TRUE(ct.const_call);
+}
+
+TEST(PropagateConst, StarPropagatesNonConstUniquePointer) {
+  auto underlying = std::make_unique<call_tester>();
+  call_tester &ct{*underlying};
+  sw::propagate_const<std::unique_ptr<call_tester>> pc{std::move(underlying)};
+  (*pc).call();
+  EXPECT_TRUE(ct.non_const_call);
+}
+
+TEST(PropagateConst, StarPropagatesConstUniquePointer) {
+  auto underlying = std::make_unique<call_tester>();
+  call_tester &ct{*underlying};
+  sw::propagate_const<std::unique_ptr<call_tester>> const pc{
+      std::move(underlying)};
+  (*pc).call();
+  EXPECT_TRUE(ct.const_call);
+}
+
+TEST(PropagateConst, StarPropagatesNonConstSharedPointer) {
+  auto underlying = std::make_shared<call_tester>();
+  call_tester &ct{*underlying};
+  sw::propagate_const<std::shared_ptr<call_tester>> pc{std::move(underlying)};
+  (*pc).call();
+  EXPECT_TRUE(ct.non_const_call);
+}
+
+TEST(PropagateConst, StarPropagatesConstSharedPointer) {
+  auto underlying = std::make_shared<call_tester>();
+  call_tester &ct{*underlying};
+  sw::propagate_const<std::shared_ptr<call_tester>> const pc{
+      std::move(underlying)};
+  (*pc).call();
+  EXPECT_TRUE(ct.const_call);
+}
+
+// TODO:
+// Cast to bool
+// get()
+// Assignment 
+// swap
+// implicit conversion function to pointer
+// Comparisons
+// get_underlying
+// helper classes
